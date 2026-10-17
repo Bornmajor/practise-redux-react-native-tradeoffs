@@ -1,23 +1,25 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { Text, useColorScheme, View } from 'react-native';
-
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+// Provider: the component that makes the Redux store available to everything inside it
+import { Provider } from 'react-redux';
+// SafeAreaView: keeps content away from the notch / status bar
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { useState } from 'react';
-import FormScreen from '@/my-app/form-screen';
-import CounterScreen from '@/my-app/counter-screen';
+// The store we created in step 3
+import { store } from '@/shared/store/store';
+// The screen you're showing now; step 5 will replace this with the Todos screen
+//import TasksScreen from '@/my-app/tasks-screen';
+import TodosScreen from '@/features/todos/screens/todos-screen';
 
-
-
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
+// The root layout: Expo Router renders this around every screen in the app
+export default function RootLayout() {
+  // Return the UI tree for the whole app
   return (
-   <SafeAreaView style={{flex:1}}>
-   <CounterScreen />
-   </SafeAreaView>
+    // Give the store to every component inside; must be the outermost wrapper
+    <Provider store={store}>
+      {/* Keep the screen inside the safe area and let it fill the height */}
+      <SafeAreaView style={{ flex: 1 }}>
+        {/* The current screen; any component in here can now use the Redux hooks */}
+        <TodosScreen />
+      </SafeAreaView>
+    </Provider>
   );
 }
