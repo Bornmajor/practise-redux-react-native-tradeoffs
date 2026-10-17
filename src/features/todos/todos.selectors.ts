@@ -42,3 +42,9 @@ export const selectVisibleTodos = createSelector(
       // Otherwise keep only todos whose status matches the filter
       : todos.filter((todo) => todo.status === filter),
 );
+
+// Where the API request is: 'idle' | 'loading' | 'succeeded' | 'failed'
+export const selectLoadStatus = (state: RootState) => state.todos.loadStatus;
+
+// The error message if loading failed, otherwise null
+export const selectLoadError = (state: RootState) => state.todos.error;
