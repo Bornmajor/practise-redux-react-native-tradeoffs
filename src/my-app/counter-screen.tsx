@@ -1,5 +1,7 @@
 import { useState } from "react";
-import { Button, StyleSheet, Text, View } from "react-native";
+import {  StyleSheet, Text, View } from "react-native";
+import {Button, ButtonText} from '@/components/ui/button'
+import MyBottomSheetNumber from "./my-bottom-sheet";
 
 const CounterScreen = () =>{
 
@@ -18,25 +20,25 @@ const CounterScreen = () =>{
 
 
     return (
-        <View style={styles.container}>
+        <View style={styles.container} className="bg-secondary">
           <Text style={{
             fontSize:40
-          }}>{count}
+          }} className="text-foreground">{count}
           </Text>
 
           <View style={styles.buttonsContainer}>
 
-             <Button 
-             title="Decrement"
-             onPress={decrement}
-             />
+           
+             <Button onPress={decrement}>
+                <ButtonText>Decrement</ButtonText>
+             </Button>
 
-             <Button 
-             title="Increment"
-             onPress={increment}
-             />
+              <Button onPress={increment}>
+                 <ButtonText>Increment</ButtonText>
+             </Button>
             
           </View>
+          <MyBottomSheetNumber myNumber="5" />
         </View>
     )
 }
