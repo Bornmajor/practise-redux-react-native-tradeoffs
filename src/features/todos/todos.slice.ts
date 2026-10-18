@@ -1,19 +1,42 @@
 // createSlice builds the reducer + actions; PayloadAction types an action's payload; nanoid makes unique ids
-import { createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit';
+// createAsyncThunk creates async actions (pending / fulfilled / rejected)
+import { createAsyncThunk, createSlice, nanoid, type PayloadAction } from '@reduxjs/toolkit';
 // Import the types we defined in step 1 (import type = only used for TypeScript, removed at runtime)
 import type { Todo, TodoFilter, TodosState } from './types';
+// The fake API (data source) from step 8
+import { todosApi } from './data/todos.api';
+
+// An async action: calls the API and dispatches pending → fulfilled / rejected automatically
+export const fetchTodos = createAsyncThunk<
+  Todo[],                     // what it returns on success (becomes the fulfilled payload)
+  void,                       // what you pass when dispatching: nothing, so dispatch(fetchTodos())
+  { rejectValue: string }     // what it returns on failure (becomes the rejected payload)
+>(
+  // Action type prefix: creates 'todos/fetchTodos/pending', '/fulfilled' and '/rejected'
+  'todos/fetchTodos',
+  // The async work; first argument is unused (void), second gives helper tools
+  async (_, { rejectWithValue }) => {
+    // try: run the request; catch: turn any failure into a clean string message
+    try {
+      // Wait for the API; the result becomes action.payload in "fulfilled"
+      return await todosApi.getAll();
+    } catch (error) {
+      // Send a readable message as action.payload in "rejected"
+      return rejectWithValue(error instanceof Error ? error.message : 'Something went wrong');
+    }
+  },
+);
 
 // The state the app starts with, before any action is dispatched
 const initialState: TodosState = {
-  // Start with two sample todos so the screen isn't empty while we learn
-  items: [
-    // A sample todo that is still pending
-    { id: '1', title: 'Learn what a slice is', status: 'pending' },
-    // A sample todo that is already completed
-    { id: '2', title: 'Install Redux Toolkit', status: 'completed' },
-  ],
+  // Empty: todos now come from the API instead of being hard-coded
+  items: [],
   // Show all todos when the app starts
   filter: 'all',
+  // Nothing has been requested yet
+  loadStatus: 'idle',
+  // No error yet
+  error: null,
 };
 
 // createSlice generates the reducer and action creators for the "todos" part of state
@@ -88,6 +111,33 @@ const todosSlice = createSlice({
       // Replace the current filter; the todo list itself is not touched
       state.filter = action.payload;
     },
+  },
+  // extraReducers: respond to actions created OUTSIDE this slice's reducers (like the thunk's)
+  extraReducers: (builder) => {
+    // builder lets you add one case per action type
+    builder
+      // Request started
+      .addCase(fetchTodos.pending, (state) => {
+        // Show the spinner
+        state.loadStatus = 'loading';
+        // Clear any old error from a previous failed attempt
+        state.error = null;
+      })
+      // Request succeeded; action.payload is the Todo[] the thunk returned
+      .addCase(fetchTodos.fulfilled, (state, action) => {
+        // Show the list
+        state.loadStatus = 'succeeded';
+        // Replace the list with the server's todos
+        state.items = action.payload;
+
+      })
+      // Request failed; action.payload is the string from rejectWithValue
+      .addCase(fetchTodos.rejected, (state, action) => {
+        // Show the error UI
+        state.loadStatus = 'failed';
+        // Use our message; fall back to Redux's own error message if payload is missing
+        state.error = action.payload ?? action.error.message ?? 'Something went wrong';
+      });
   },
 });
 
