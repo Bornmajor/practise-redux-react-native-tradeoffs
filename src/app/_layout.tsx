@@ -1,21 +1,21 @@
 import '@/global.css';
+import { Stack } from 'expo-router';
 import { Provider } from 'react-redux';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { store } from '@/store/store';
-import { SubscriptionsCheckScreen } from '@/features/subscriptions/screens/subscriptions-check-screen';
 
 export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      {/* Redux store: RTK Query's cache, available to every screen */}
       <Provider store={store}>
         <GluestackUIProvider mode="system">
-          <SafeAreaView style={{ flex: 1 }}>
-            {/* TEMPORARY: replaced by real screens in phase 4 */}
-            <SubscriptionsCheckScreen />
-          </SafeAreaView>
+          {/* Stack: each screen slides in on top, with a header and a back button */}
+          <Stack>
+            <Stack.Screen name="index" options={{ title: 'Subscriptions' }} />
+            <Stack.Screen name="subscriptions/new" options={{ title: 'New subscription' }} />
+            <Stack.Screen name="subscriptions/[id]" options={{ title: 'Edit subscription' }} />
+          </Stack>
         </GluestackUIProvider>
       </Provider>
     </GestureHandlerRootView>
