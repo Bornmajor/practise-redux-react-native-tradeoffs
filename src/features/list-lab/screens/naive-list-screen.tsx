@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FlatList, View } from 'react-native';
+import { ActivityIndicator, FlatList, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
@@ -7,6 +7,7 @@ import { ExpoImageCard } from '../components/expo-image-card';
 import { NaiveCard } from '../components/naive-card';
 import { generateItems } from '../data/generate-items';
 import { useDisplayImageWidth } from '../hooks/use-display-image-width';
+import { usePagedItems } from '../hooks/use-paged-items';
 import { elapsedMs, startTimer } from '../utils/render-timer';
 
 // How many items to render; start small and increase to watch the app degrade
@@ -15,6 +16,7 @@ const COUNTS = [50, 200, 1000, 5000];
 type ImageMode = 'full' | 'display';
 type Renderer = 'rn-image' | 'expo-image';
 type ListKind = 'flatlist' | 'flashlist';
+type DataMode = 'all' | 'paged';
 
 export function NaiveListScreen() {
   const [count, setCount] = useState(50);
@@ -32,6 +34,14 @@ export function NaiveListScreen() {
 
   // Section 5: which list component (mount/unmount vs recycling)
   const [listKind, setListKind] = useState<ListKind>('flashlist');
+
+  // Section 6: everything at once (generated) vs page by page from a fake API
+  const [dataMode, setDataMode] = useState<DataMode>('paged');
+  const paged = usePagedItems(imageWidth);
+  const listItems = dataMode === 'paged' ? paged.items : items;
+  const onEndReached = dataMode === 'paged' ? paged.loadMore : undefined;
+  const footer =
+    dataMode === 'paged' && paged.isLoading ? <ActivityIndicator className="my-6" /> : null;
 
   // Render timer: time from tapping a count until the next frame after the list is on screen
   const [lastRenderMs, setLastRenderMs] = useState<number | null>(null);
@@ -108,8 +118,25 @@ export function NaiveListScreen() {
           ))}
         </View>
 
+        {/* Data: everything at once (count buttons) vs page by page from a fake API */}
+        <View className="flex-row flex-wrap gap-2">
+          {(['all', 'paged'] as const).map((value) => (
+            <Button
+              key={value}
+              size="sm"
+              variant={value === dataMode ? 'default' : 'outline'}
+              onPress={() => setDataMode(value)}
+            >
+              <ButtonText>
+                {value === 'paged' ? `Paged (${paged.items.length} loaded)` : 'All at once'}
+              </ButtonText>
+            </Button>
+          ))}
+        </View>
+
         <Text className="text-xs text-muted-foreground">
-          {count} items · {listKind === 'flashlist' ? 'FlashList' : 'FlatList'} · images:{' '}
+          {dataMode === 'paged' ? `paged, ${paged.items.length} loaded` : `${count} items`} ·{' '}
+          {listKind === 'flashlist' ? 'FlashList' : 'FlatList'} · images:{' '}
           {imageMode === 'full' ? 'full size' : `display size (${displayWidth}px)`} ·{' '}
           {renderer === 'expo-image' ? 'expo-image' : 'RN Image'} · last render:{' '}
           {lastRenderMs === null ? 'tap a count to measure' : `${lastRenderMs} ms`}
@@ -120,22 +147,28 @@ export function NaiveListScreen() {
         // Section 5: FlashList RECYCLES cards: off-screen cards are reused for new items.
         // getItemType keeps one recycling pool per image shape, so a tall card is reused for a tall card.
         <FlashList
-          data={items}
+          data={listItems}
           keyExtractor={(item) => item.id}
           renderItem={({ item }) => <Card item={item} imageWidth={imageWidth} />}
           getItemType={(item) => item.image.shape}
           ItemSeparatorComponent={Separator}
           contentContainerStyle={{ padding: 16 }}
+          onEndReached={onEndReached} // paged mode: load the next page near the end
+          onEndReachedThreshold={0.5} // "near" = within half a screen of the end
+          ListFooterComponent={footer} // spinner while the next page loads
         />
       ) : (
         // Section 2: FlatList with DEFAULT settings. Only the cards near the screen are mounted;
         // off-screen cards are unmounted. No tuning.
         <FlatList
-          data={items}
+          data={listItems}
           keyExtractor={(item) => item.id} // stable, unique key per card
           renderItem={({ item }) => <Card item={item} imageWidth={imageWidth} />}
           ItemSeparatorComponent={Separator} // the 16 px gap between cards
           contentContainerClassName="p-4"
+          onEndReached={onEndReached}
+          onEndReachedThreshold={0.5}
+          ListFooterComponent={footer}
         />
       )}
     </View>

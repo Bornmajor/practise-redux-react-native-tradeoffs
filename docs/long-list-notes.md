@@ -347,3 +347,36 @@ Settings for all runs: 5000 items, Display size, expo-image. Scroll fast to ~car
 **Result:** FlashList ran at a steady ~60 FPS with **570 dropped frames**, the lowest of any
 section so far (5000 items, Display size, expo-image). Compare: 1,286 dropped with FlatList and
 display-size images in section 3.
+
+## Section 6: paged loading + image prefetching
+
+**Change from section 5:** a fifth switch, **All at once / Paged**. Paged mode loads items from a
+fake API (`data/fake-api.ts`), 50 per request with a 600 ms delay, through
+`hooks/use-paged-items.ts`.
+
+| Technique | What it does | Why it matters |
+|---|---|---|
+| Pagination | load 50 items per request | faster first screen; less data and memory up front |
+| `onEndReached` + `onEndReachedThreshold={0.5}` | ask for the next page within half a screen of the end | the next page arrives before the user hits the bottom |
+| Loading footer | spinner at the bottom while a page loads | the user sees more is coming |
+| Double-request guard (a ref) | ignore `onEndReached` while a page is loading | lists fire `onEndReached` several times; a ref updates immediately, state only on the next render |
+| Image prefetching | `Image.prefetch` the first 10 images of each new page | their images are cached before the cards scroll in |
+
+In a real app, the hook would be an RTK Query infinite query (or TanStack's `useInfiniteQuery`);
+writing it by hand shows what those tools do internally.
+
+### Expected effect
+
+- First cards after ~0.6 s instead of waiting for all 5000 items.
+- Steady scrolling: the next page loads before you reach the end (spinner rarely visible).
+- Very fast scrolling: you can hit the end and wait ~0.6 s, the trade-off of paging.
+- New pages' first images are often already cached.
+
+### Results (fill in; reset Perf Monitor between runs)
+
+Settings: FlashList, Display size, expo-image. Scroll steadily down for ~30 s.
+
+| Data | Time to first cards | Ever reached the end and waited? | Images blank when new pages appear? | Frames dropped | TOTAL PSS |
+|---|---|---|---|---|---|
+| All at once (5000) | | — | | | |
+| Paged (50 per request) | | | | | |
