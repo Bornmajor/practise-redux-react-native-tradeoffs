@@ -24,17 +24,19 @@ const WORDS =
     ' ',
   );
 
+export type LabImage = {
+  width: number; // the SOURCE image's full size (the largest available)
+  height: number;
+  shape: (typeof SHAPES)[number]['name'];
+  color: string; // placeholder background color for this shape
+};
+
 export type LabItem = {
   id: string;
   title: string;
   description: string; // 1–4 sentences, so cards also differ in text height
   category: string;
-  image: {
-    url: string;
-    width: number; // real pixel size of the downloaded image
-    height: number;
-    shape: (typeof SHAPES)[number]['name'];
-  };
+  image: LabImage; // URLs are built per requested size (see image-url.ts)
 };
 
 // Builds `count` items. Same seed → same items every time.
@@ -49,7 +51,7 @@ export function generateItems(count: number, seed = 42): LabItem[] {
 
   return Array.from({ length: count }, (_, index) => {
     const shape = random.pick(SHAPES);
-    // FULL resolution on purpose: much bigger than a phone shows (the naive mistake)
+    // The SOURCE size: much bigger than a phone shows (requesting it is the naive mistake)
     const width = random.int(1200, 2400);
     const height = Math.round(width / shape.ratio);
 
@@ -59,12 +61,10 @@ export function generateItems(count: number, seed = 42): LabItem[] {
       description: Array.from({ length: random.int(1, 4) }, sentence).join(' '),
       category: random.pick(CATEGORIES),
       image: {
-        // placehold.co returns a PNG at exactly width × height, with its size written on it.
-        // The file is small, but the phone still decodes it to a full width × height bitmap.
-        url: `https://placehold.co/${width}x${height}/${SHAPE_COLORS[shape.name]}/ffffff/png?text=${width}x${height}`,
-        width,
+        width, // 1,200–2,400 px: the full-size source
         height,
         shape: shape.name,
+        color: SHAPE_COLORS[shape.name],
       },
     };
   });

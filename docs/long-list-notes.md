@@ -127,3 +127,65 @@ there. Only the **images** were blank until they finished loading and decoding.
 from unusable (taps > 30 s) to responsive. What remains is the **images**: each card still
 downloads and decodes a full-size image (up to 2400×4267 px for a ~360 px wide card), so images
 show up late during fast scrolls and still cost frames. That is the next section's target.
+
+## Section 3: request images at display size
+
+**Change from section 2:** each card requests its image at the size it is **displayed**, instead
+of the full-size source. A switch on the screen (**Full size / Display size**) compares both on
+the same list. The card still uses React Native's basic `<Image>`.
+
+**Code:** `data/image-url.ts` builds the URL for a requested width; `hooks/use-display-image-width.ts`
+computes that width; the card shows `source W×H → loaded W×H`.
+
+### Why size matters, even in a FlatList
+
+To draw an image, the phone decodes it into a bitmap of **width × height × 4 bytes**. The file
+size doesn't matter; the pixel dimensions do.
+
+| Image | Bitmap memory |
+|---|---|
+| 2400 × 4267 (largest "tall" source) | ~41 MB |
+| 1000 × 1778 (same shape, sized for the card) | ~7.1 MB (−83%) |
+
+Decoding 41 MB of pixels also takes far longer than 7 MB, which is why images appeared late
+during fast scrolls in section 2.
+
+### What "display size" means
+
+Layouts use **density-independent pixels (dp)**, but screens have more **physical pixels**:
+
+```
+physical pixels = dp × PixelRatio.get()
+```
+
+The card is the screen width minus 32 dp of padding. On a ~393 dp wide screen with a pixel ratio
+around 2.75, that's ~990 physical pixels, so a ~1000 px image is already pixel-perfect. Anything
+larger is wasted memory and decoding.
+
+**Rounding up to buckets:** the width is rounded **up** to the next 100 px, so different screens and
+rotations reuse the same URL (better cache hits) and the image is never blurry.
+
+### When the server can't resize
+
+placehold.co, Pexels, Unsplash and image CDNs (Cloudinary, imgix, Cloudflare Images) all resize on
+request. When a server can't, the app has to downscale on the phone: React Native's `<Image>` on
+Android has `resizeMethod="resize"`, and `expo-image` downsamples automatically. Downscaling on the
+device still downloads the big file, so server resizing is better when available.
+
+### Expected effect
+
+- **Memory (TOTAL PSS): much lower in Display size.** The main number to watch.
+- Images appear sooner during fast scrolls; fewer dropped frames.
+- Download size: no visible difference with placehold.co (small PNGs either way); with real
+  photos, display-size downloads would also be ~5–10× smaller.
+
+### Results (fill in; reset Perf Monitor between runs)
+
+Measure TOTAL PSS after scrolling ~100 cards in each mode.
+
+| Items | Images | FPS while scrolling | Frames dropped | Stutters (4+) | Images blank on fast scroll? | TOTAL PSS |
+|---|---|---|---|---|---|---|
+| 1000 | Full size | | | | | |
+| 1000 | Display size | | | | | |
+| 5000 | Full size | | | | | |
+| 5000 | Display size | | | | | |
