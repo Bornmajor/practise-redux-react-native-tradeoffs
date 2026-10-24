@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
+import { ExpoImageCard } from '../components/expo-image-card';
 import { NaiveCard } from '../components/naive-card';
 import { generateItems } from '../data/generate-items';
 import { useDisplayImageWidth } from '../hooks/use-display-image-width';
@@ -11,6 +12,7 @@ import { elapsedMs, startTimer } from '../utils/render-timer';
 const COUNTS = [50, 200, 1000, 5000];
 
 type ImageMode = 'full' | 'display';
+type Renderer = 'rn-image' | 'expo-image';
 
 export function NaiveListScreen() {
   const [count, setCount] = useState(50);
@@ -21,6 +23,10 @@ export function NaiveListScreen() {
   const displayWidth = useDisplayImageWidth();
   // 'full' = request the source size (sections 1–2 behavior); 'display' = request what the card needs
   const imageWidth = imageMode === 'full' ? Number.POSITIVE_INFINITY : displayWidth;
+
+  // Section 4: which image component draws the cards
+  const [renderer, setRenderer] = useState<Renderer>('expo-image');
+  const Card = renderer === 'expo-image' ? ExpoImageCard : NaiveCard;
 
   // Render timer: time from tapping a count until the next frame after the list is on screen
   const [lastRenderMs, setLastRenderMs] = useState<number | null>(null);
@@ -69,9 +75,24 @@ export function NaiveListScreen() {
           ))}
         </View>
 
+        {/* Image component: compare React Native's <Image> with expo-image */}
+        <View className="flex-row flex-wrap gap-2">
+          {(['rn-image', 'expo-image'] as const).map((value) => (
+            <Button
+              key={value}
+              size="sm"
+              variant={value === renderer ? 'default' : 'outline'}
+              onPress={() => setRenderer(value)}
+            >
+              <ButtonText>{value === 'expo-image' ? 'expo-image' : 'RN Image'}</ButtonText>
+            </Button>
+          ))}
+        </View>
+
         <Text className="text-xs text-muted-foreground">
           {count} items · FlatList (default settings) · images:{' '}
-          {imageMode === 'full' ? 'full size' : `display size (${displayWidth}px)`} · last render:{' '}
+          {imageMode === 'full' ? 'full size' : `display size (${displayWidth}px)`} ·{' '}
+          {renderer === 'expo-image' ? 'expo-image' : 'RN Image'} · last render:{' '}
           {lastRenderMs === null ? 'tap a count to measure' : `${lastRenderMs} ms`}
         </Text>
       </View>
@@ -81,7 +102,7 @@ export function NaiveListScreen() {
       <FlatList
         data={items}
         keyExtractor={(item) => item.id} // stable, unique key per card
-        renderItem={({ item }) => <NaiveCard item={item} imageWidth={imageWidth} />}
+        renderItem={({ item }) => <Card item={item} imageWidth={imageWidth} />}
         ItemSeparatorComponent={Separator} // the 16 px gap between cards
         contentContainerClassName="p-4"
       />

@@ -214,3 +214,60 @@ which happens every time a card scrolls into view:
 
 The download itself barely changed here (placehold.co PNGs are small at any size); with real
 photos it would also be ~5–10× smaller, so images would arrive even sooner.
+
+## Section 4: expo-image
+
+**Change from section 3:** a third switch, **RN Image / expo-image**, draws the same cards with
+`expo-image`. Same list, items and image sizes, so all four combinations can be compared:
+{RN Image, expo-image} × {Full size, Display size}.
+
+**Code:** `components/expo-image-card.tsx`; both cards share `components/card-details.tsx`.
+The development build already includes expo-image (it came with the template), so no rebuild.
+
+### Three ways to make a big image small
+
+Think of ordering a poster for a small frame:
+
+| Strategy | Poster analogy | Download | Decode / memory |
+|---|---|---|---|
+| 1. Scale on screen | order a huge poster, fold it | full size | full size |
+| 2. Downscale while decoding | order a huge poster, cut it down on arrival | full size | small |
+| 3. Resize on the server | order the right size | small | small |
+
+Sections 1–2 used strategy 1; section 3 switched to strategy 3 (request the display size);
+expo-image adds strategy 2 automatically as a safety net (`allowDownscaling`, on by default).
+
+**Rule:** ask for the size you show (3); use downscaling (2) as a backup when the server
+can't resize; scaling on screen alone (1) is the slowest.
+
+### What expo-image adds
+
+| Feature | Prop | Effect |
+|---|---|---|
+| Memory + disk cache | `cachePolicy="memory-disk"` (default `'disk'`) | decoded images reused instantly; files survive restarts |
+| Automatic downscaling | `allowDownscaling` (default `true`) | big files decoded at the view's size |
+| Placeholder | here: a semi-transparent shape color as background | never blank while loading |
+| Transition | `transition={150}` | fades in instead of popping |
+| Recycling support | `recyclingKey` | resets the view when a recycled row shows another item (FlashList) |
+| Prefetch | `Image.prefetch(urls)` | load images before their cards appear |
+
+**Placeholder strategies:** dominant color (free; used here), blurhash/thumbhash (a short string
+the server computes, decoded to a blurry preview), or a tiny thumbnail loaded first.
+
+### Expected effect
+
+- While loading: colored placeholder, then a fade-in (RN Image: empty space).
+- Scrolling back up: images instant from the memory cache.
+- **Full size + expo-image:** much lighter than Full size + RN Image thanks to downscaling at
+  decode, but the full file is still downloaded.
+
+### Results (fill in; reset Perf Monitor between runs)
+
+Scroll down ~100 cards fast, then back up to the top.
+
+| Items | Images | Component | Frames dropped | Stutters (4+) | Blank while loading? | Scrolling back: images instant? | TOTAL PSS |
+|---|---|---|---|---|---|---|---|
+| 5000 | Full size | RN Image | | | | | |
+| 5000 | Full size | expo-image | | | | | |
+| 5000 | Display size | RN Image | | | | | |
+| 5000 | Display size | expo-image | | | | | |
