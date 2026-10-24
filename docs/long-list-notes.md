@@ -85,3 +85,31 @@ register at all.
 
 Not yet recorded: render times and memory (TOTAL PSS). Later sections add them as each
 optimization is measured.
+
+## Section 2: a simple FlatList (default settings)
+
+**Change from section 1:** `ScrollView` + `.map()` → `FlatList`. Same cards, images and data,
+so the only difference is virtualization.
+
+### What FlatList does by default
+
+- `initialNumToRender: 10`: only ~10 cards are created when the list opens.
+- `windowSize: 21`: cards within ~10 screens above and below stay mounted; the rest are
+  unmounted, which lets their images be released.
+- `maxToRenderPerBatch: 10`: new cards are added in batches of 10 while scrolling.
+
+### Expected effect
+
+- Render time and tap response stay roughly the same for 50 or 5000 items.
+- Much lower memory: only mounted cards hold image bitmaps.
+- Still visible: stutter while full-size images decode, blank areas on very fast scrolls,
+  and images reloading when scrolling back.
+
+### Results (fill in)
+
+| Items | FPS while scrolling | Frames dropped | Stutters (4+) | Tap response | TOTAL PSS | Notes |
+|---|---|---|---|---|---|---|
+| 50 | | | | | | |
+| 200 | | | | | | |
+| 1000 | | | | | | |
+| 5000 | | | | | | |

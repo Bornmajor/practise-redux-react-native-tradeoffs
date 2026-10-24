@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { FlatList, View } from 'react-native';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { NaiveCard } from '../components/naive-card';
@@ -44,17 +44,25 @@ export function NaiveListScreen() {
           ))}
         </View>
         <Text className="text-xs text-muted-foreground">
-          {count} items, ALL rendered at once (ScrollView) · last render:{' '}
+          {count} items · FlatList (virtualized, default settings) · last render:{' '}
           {lastRenderMs === null ? 'tap a count to measure' : `${lastRenderMs} ms`}
         </Text>
       </View>
 
-      {/* NAIVE: every item is created now, including thousands far off screen */}
-      <ScrollView contentContainerClassName="gap-4 p-4">
-        {items.map((item) => (
-          <NaiveCard key={item.id} item={item} />
-        ))}
-      </ScrollView>
+      {/* Section 2: FlatList with DEFAULT settings. Only the cards near the screen are mounted;
+          off-screen cards are unmounted. No tuning yet. */}
+      <FlatList
+        data={items}
+        keyExtractor={(item) => item.id} // stable, unique key per card
+        renderItem={({ item }) => <NaiveCard item={item} />}
+        ItemSeparatorComponent={Separator} // the 16 px gap between cards
+        contentContainerClassName="p-4"
+      />
     </View>
   );
+}
+
+// Space between cards (FlatList's way to add gaps; `gap` on the container isn't reliable here)
+function Separator() {
+  return <View className="h-4" />;
 }
