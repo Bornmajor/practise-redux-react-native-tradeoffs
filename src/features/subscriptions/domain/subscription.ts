@@ -31,7 +31,8 @@ export type SubscriptionErrorCode =
   | 'UNAUTHORIZED' // 401: missing or wrong API key
   | 'NOT_FOUND' // 404: doesn't exist or was deleted
   | 'CONFLICT' // PUT not applied: the server has a newer version
-  | 'OFFLINE' // no response: no internet, wrong IP, server down
+  | 'OFFLINE' // the device has no connection
+  | 'SERVER_UNREACHABLE' // device is online, but the server doesn't answer
   | 'TIMEOUT' // the request took too long
   | 'SERVER' // 500+
   | 'INVALID_RESPONSE' // the server sent data we can't use

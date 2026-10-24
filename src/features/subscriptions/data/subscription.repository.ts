@@ -1,4 +1,10 @@
-import { HttpError, InvalidResponseError, NetworkError, TimeoutError } from '@/shared/api/http-errors';
+import {
+  HttpError,
+  InvalidResponseError,
+  NetworkError,
+  ServerUnreachableError,
+  TimeoutError,
+} from '@/shared/api/http-errors';
 import { SubscriptionError, type Subscription, type SubscriptionInput } from '../domain/subscription';
 import { isDeleted, toSubscription, toWriteDto } from './subscription.dto';
 import type { SubscriptionRemote } from './subscription.remote';
@@ -18,6 +24,9 @@ export function toSubscriptionError(error: unknown): SubscriptionError {
   if (error instanceof SubscriptionError) return error; // already translated (e.g. CONFLICT)
   if (error instanceof TimeoutError) return new SubscriptionError('TIMEOUT', undefined, error);
   if (error instanceof NetworkError) return new SubscriptionError('OFFLINE', undefined, error);
+  if (error instanceof ServerUnreachableError) {
+    return new SubscriptionError('SERVER_UNREACHABLE', undefined, error);
+  }
   if (error instanceof InvalidResponseError) {
     return new SubscriptionError('INVALID_RESPONSE', undefined, error);
   }

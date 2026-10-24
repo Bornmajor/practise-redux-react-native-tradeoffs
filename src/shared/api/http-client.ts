@@ -1,5 +1,6 @@
 import { create, isAxiosError, type AxiosInstance } from 'axios';
-import { HttpError, NetworkError, TimeoutError } from './http-errors';
+import NetInfo from '@react-native-community/netinfo';
+import { HttpError, NetworkError, ServerUnreachableError, TimeoutError } from './http-errors';
 
 // Settings the client needs (passed in, so tests can use other values)
 export type HttpClientConfig = {
@@ -31,17 +32,20 @@ export function createHttpClient({ baseUrl, apiKey, timeoutMs = 10_000 }: HttpCl
   // so no other file ever needs to know Axios's error format
   http.interceptors.response.use(
     (response) => response,
-    (error: unknown) => {
-      if (isAxiosError<{ message?: string }>(error)) {
-        if (error.response) {
-          return Promise.reject(new HttpError(error.response.status, error.response.data?.message));
-        }
-        if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
-          return Promise.reject(new TimeoutError());
-        }
-        return Promise.reject(new NetworkError());
+    async (error: unknown) => {
+      if (!isAxiosError<{ message?: string }>(error)) throw error; // not Axios: pass through unchanged
+
+      if (error.response) {
+        throw new HttpError(error.response.status, error.response.data?.message); // server answered 4xx/5xx
       }
-      return Promise.reject(error); // not an Axios error: let it through unchanged
+      if (error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+        throw new TimeoutError(); // server too slow
+      }
+
+      // No response at all: is it the DEVICE, or the SERVER?
+      const network = await NetInfo.fetch();
+      const deviceOffline = network.isConnected === false || network.isInternetReachable === false;
+      throw deviceOffline ? new NetworkError() : new ServerUnreachableError();
     },
   );
 

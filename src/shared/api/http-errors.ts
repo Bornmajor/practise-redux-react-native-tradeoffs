@@ -9,11 +9,19 @@ export class HttpError extends Error {
   }
 }
 
-// No response at all: no internet, wrong IP, firewall, server not running
+// No response because the DEVICE has no connection (checked with NetInfo)
 export class NetworkError extends Error {
   constructor() {
     super('Network request failed');
     this.name = 'NetworkError';
+  }
+}
+
+// No response although the device IS connected: server down, wrong address, or blocked by a firewall
+export class ServerUnreachableError extends Error {
+  constructor() {
+    super('Server unreachable');
+    this.name = 'ServerUnreachableError';
   }
 }
 

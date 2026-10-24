@@ -8,6 +8,7 @@ export const subscriptionErrorMessages: Record<SubscriptionErrorCode, string> = 
   NOT_FOUND: 'This subscription no longer exists.',
   CONFLICT: 'This subscription was changed elsewhere. Reload and try again.',
   OFFLINE: "You're offline. Check your Wi-Fi and try again.",
+  SERVER_UNREACHABLE: "Can't reach the server right now. It may be down. Please try again later.",
   TIMEOUT: 'The server took too long to respond. Try again.',
   SERVER: 'Something went wrong on our side. Please try again later.',
   INVALID_RESPONSE: 'We received unexpected data. Please try again later.',
@@ -17,6 +18,7 @@ export const subscriptionErrorMessages: Record<SubscriptionErrorCode, string> = 
 // Codes where a "Try again" button makes sense
 export const retryableCodes: SubscriptionErrorCode[] = [
   'OFFLINE',
+  'SERVER_UNREACHABLE',
   'TIMEOUT',
   'SERVER',
   'INVALID_RESPONSE',
