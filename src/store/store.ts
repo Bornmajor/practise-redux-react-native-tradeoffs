@@ -8,7 +8,12 @@ export const store = configureStore({
     [subscriptionsApi.reducerPath]: subscriptionsApi.reducer,
   },
   // RTK Query's middleware runs the requests, caching and refetching
-  middleware: (getDefaultMiddleware) => getDefaultMiddleware().concat(subscriptionsApi.middleware),
+  middleware: (getDefaultMiddleware) =>
+    getDefaultMiddleware({
+      // Dev-only checks: keep them on, but only warn if they get really slow on a phone
+      serializableCheck: { warnAfter: 128 },
+      immutableCheck: { warnAfter: 128 },
+    }).concat(subscriptionsApi.middleware),
 });
 
 // Make refetchOnFocus / refetchOnReconnect work on a phone (see app-listeners.ts)
