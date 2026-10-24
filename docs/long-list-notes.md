@@ -379,4 +379,7 @@ Settings: FlashList, Display size, expo-image. Scroll steadily down for ~30 s.
 | Data | Time to first cards | Ever reached the end and waited? | Images blank when new pages appear? | Frames dropped | TOTAL PSS |
 |---|---|---|---|---|---|
 | All at once (5000) | | — | | | |
-| Paged (50 per request) | | | | | |
+| Paged (50 per request) | ~0.6 s (first page) | **no**: no spinner when scrolling steadily | | | |
+
+**Result:** paging works as intended: with `onEndReachedThreshold={0.5}`, each next page arrived
+before the end of the list, so steady scrolling never showed the loading spinner.
