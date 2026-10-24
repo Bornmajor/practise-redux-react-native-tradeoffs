@@ -34,6 +34,10 @@ yarn-error.*
 .env*.local
 .env
 
+# flavor env files (real values); templates are committed
+env/.env.*
+!env/.env.*.example
+
 # typescript
 *.tsbuildinfo
 

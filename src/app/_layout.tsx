@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { GluestackUIProvider } from '@/components/ui/gluestack-ui-provider';
 import { store } from '@/store/store';
+import { FlavorBadge } from '@/components/flavor-badge';
 
 export default function RootLayout() {
   return (
@@ -16,6 +17,8 @@ export default function RootLayout() {
             <Stack.Screen name="subscriptions/new" options={{ title: 'New subscription' }} />
             <Stack.Screen name="subscriptions/[id]" options={{ title: 'Edit subscription' }} />
           </Stack>
+          {/* DEV / UAT corner badge (hidden in prod) */}
+          <FlavorBadge />
         </GluestackUIProvider>
       </Provider>
     </GestureHandlerRootView>
