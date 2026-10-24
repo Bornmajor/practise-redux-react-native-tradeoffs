@@ -105,11 +105,25 @@ so the only difference is virtualization.
 - Still visible: stutter while full-size images decode, blank areas on very fast scrolls,
   and images reloading when scrolling back.
 
-### Results (fill in)
+### Results
+
+Measured on the Infinix X6528 (development build, dev mode), same images as section 1.
 
 | Items | FPS while scrolling | Frames dropped | Stutters (4+) | Tap response | TOTAL PSS | Notes |
 |---|---|---|---|---|---|---|
-| 50 | | | | | | |
-| 200 | | | | | | |
-| 1000 | | | | | | |
-| 5000 | | | | | | |
+| 50 | **~60** | 1,028 | 1 | | | |
+| 200 | ~60 | 1,295 | 1 | | | |
+| 1000 | ~60 | 1,550 | | | | |
+| 5000 | ~60 | 2,826 | | much faster than section 1, but not instant | | |
+
+The frame counters were read one after another without resetting Perf Monitor, so they are
+**cumulative**: each run added about +267 (→ 200), +255 (→ 1000) and +1,276 (→ 5000) dropped
+frames. Reset Perf Monitor between runs in later sections to get per-run numbers.
+
+**Blank areas:** when scrolling fast, cards never appeared empty: titles and text were always
+there. Only the **images** were blank until they finished loading and decoding.
+
+**Summary:** virtualization alone took scrolling from **~10 to ~60 FPS**, and 5000 items went
+from unusable (taps > 30 s) to responsive. What remains is the **images**: each card still
+downloads and decodes a full-size image (up to 2400×4267 px for a ~360 px wide card), so images
+show up late during fast scrolls and still cost frames. That is the next section's target.
