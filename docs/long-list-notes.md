@@ -188,4 +188,29 @@ Measure TOTAL PSS after scrolling ~100 cards in each mode.
 | 1000 | Full size | | | | | |
 | 1000 | Display size | | | | | |
 | 5000 | Full size | | | | | |
-| 5000 | Display size | | | | | |
+| 5000 | Display size | ~60 | 1,286 | 1 | **no**: no empty or partly drawn images | |
+
+**Result:** with display-size images, fast scrolling through 5000 items showed **no blank or
+partly drawn images** (in section 2, images stayed blank during fast scrolls), with 1 stutter.
+
+### Why images now keep up with fast scrolling
+
+The list was already fast at mounting cards (section 2). What changed is the work **per image**,
+which happens every time a card scrolls into view:
+
+| Step | Full size (2400×4267) | Display size (1000×1778) |
+|---|---|---|
+| Pixels to decode | ~10.2 million | ~1.8 million (**~5.8× fewer**) |
+| Bitmap memory | ~41 MB | ~7.1 MB |
+| Upload to the GPU to draw | large texture; taller than the 4096 px limit many phone GPUs have, so it may need extra downscaling | small texture |
+| Fits in the image memory cache | few images at a time; older ones are evicted and must be decoded again | many more stay cached, so scrolling back reuses them |
+
+1. **Decoding is ~6× less work per image.** Image decoding runs on background threads, and each one
+   now finishes before the card reaches the middle of the screen, so it's ready when you see it.
+2. **Less memory pressure.** Smaller bitmaps leave room in the image cache and cause less garbage
+   collection, which otherwise interrupts the app and drops frames.
+3. **Faster drawing.** Smaller textures are quicker to send to the GPU, which happens on the
+   rendering side, the part that must keep up with 60 FPS.
+
+The download itself barely changed here (placehold.co PNGs are small at any size); with real
+photos it would also be ~5–10× smaller, so images would arrive even sooner.
