@@ -12,9 +12,18 @@ on the same generated data (seed 42), on the same phone (Infinix X6528, 4 GB RAM
 Open it from the Subscriptions screen → **Lab**.
 
 **Data:** generated in the app from a fixed seed, so every run has the same items. Images come
-from [Lorem Picsum](https://picsum.photos) (`https://picsum.photos/seed/{seed}/{width}/{height}`),
-a free placeholder-photo service that returns a photo at exactly the requested size. The phone
-needs internet.
+from [placehold.co](https://placehold.co)
+(`https://placehold.co/{width}x{height}/{color}/ffffff/png?text={width}x{height}`): a solid-color
+PNG at exactly the requested size, with the size written on it and one color per shape. The
+phone needs internet.
+
+[Lorem Picsum](https://picsum.photos) (real photos) was tried first, but its image server
+answered `503 Service Unavailable` for anything wider than ~600 px, so every full-size image
+failed. React Native's `<Image>` shows nothing when a download fails, so the cards were blank.
+
+**Small file, big memory:** these PNGs are only ~30 KB to download, but memory depends on
+**pixel dimensions, not file size**. To draw one, the phone decodes it into a width × height × 4
+byte bitmap, so a 1600×2133 placeholder costs ~13.6 MB, the same as a photo of that size.
 
 ### Why it hurts
 

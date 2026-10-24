@@ -9,6 +9,15 @@ const SHAPES = [
   { name: 'panorama', ratio: 3 / 1 },
 ] as const;
 
+// One background color per shape, so the different sizes are easy to tell apart
+const SHAPE_COLORS = {
+  landscape: '3c87f7',
+  portrait: 'f97316',
+  square: '22c55e',
+  tall: 'a855f7',
+  panorama: 'ef4444',
+} as const;
+
 const CATEGORIES = ['Travel', 'Food', 'Nature', 'City', 'People', 'Tech'] as const;
 const WORDS =
   'lorem ipsum dolor sit amet consectetur adipiscing elit sed do eiusmod tempor incididunt ut labore et dolore magna aliqua'.split(
@@ -50,8 +59,9 @@ export function generateItems(count: number, seed = 42): LabItem[] {
       description: Array.from({ length: random.int(1, 4) }, sentence).join(' '),
       category: random.pick(CATEGORIES),
       image: {
-        // picsum returns a photo at exactly width × height for this seed
-        url: `https://picsum.photos/seed/lab-${index}/${width}/${height}`,
+        // placehold.co returns a PNG at exactly width × height, with its size written on it.
+        // The file is small, but the phone still decodes it to a full width × height bitmap.
+        url: `https://placehold.co/${width}x${height}/${SHAPE_COLORS[shape.name]}/ffffff/png?text=${width}x${height}`,
         width,
         height,
         shape: shape.name,
