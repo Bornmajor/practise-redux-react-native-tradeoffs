@@ -3,6 +3,23 @@
 Practice branch: `feature/long-list-lab`. Each section changes ONE thing and measures the effect
 on the same generated data (seed 42), on the same phone (Infinix X6528, 4 GB RAM).
 
+## Rules to remember
+
+### Images: request only the size you display
+
+> **When fetching images, request only the size you'll display.** If the server can resize, ask
+> for that exact size: multiply the space the image takes on screen (in dp) by the phone's pixel
+> density, round up (e.g. to the next 100 px), and send it as a URL parameter such as
+> `?w=1000`. The phone then downloads, decodes and stores only the pixels it shows. **If the
+> server can't resize, downscale while decoding** to save memory: use an image library like
+> `expo-image` (its `allowDownscaling` is on by default), or `resizeMethod="resize"` on React
+> Native's `Image` on Android. The full file is still downloaded, but it's decoded straight to the
+> view's size, so it takes only the memory the screen needs. **Never rely on simply displaying a
+> big image small:** it looks the same, but the phone still decodes and holds every pixel, at
+> width × height × 4 bytes each (e.g. ~41 MB for a 2400×4267 image).
+
+See sections 3 and 4 for the measurements behind this rule.
+
 ## Section 1: the naive baseline
 
 **Setup:** `ScrollView` + `.map()`, React Native `<Image>`, full-resolution images
