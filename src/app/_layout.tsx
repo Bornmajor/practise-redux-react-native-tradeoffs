@@ -16,6 +16,7 @@ export default function RootLayout() {
             <Stack.Screen name="index" options={{ title: 'Subscriptions' }} />
             <Stack.Screen name="subscriptions/new" options={{ title: 'New subscription' }} />
             <Stack.Screen name="subscriptions/[id]" options={{ title: 'Edit subscription' }} />
+            <Stack.Screen name="list-lab/index" options={{ title: 'List lab: naive' }} />
           </Stack>
           {/* DEV / UAT corner badge (hidden in prod) */}
           <FlavorBadge />

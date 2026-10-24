@@ -11,9 +11,14 @@ export function SubscriptionsListScreen() {
 
   return (
     <View className="flex-1 bg-background">
-      {/* "Add" button in this screen's header */}
+      {/* Header buttons: "Lab" (long-list practice) on the left, "Add" on the right */}
       <Stack.Screen
         options={{
+          headerLeft: () => (
+            <Button size="sm" variant="ghost" onPress={() => router.push('/list-lab')}>
+              <ButtonText>Lab</ButtonText>
+            </Button>
+          ),
           headerRight: () => (
             <Button size="sm" variant="ghost" onPress={() => router.push('/subscriptions/new')}>
               <ButtonText>Add</ButtonText>
