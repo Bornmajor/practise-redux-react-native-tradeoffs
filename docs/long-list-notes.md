@@ -7,6 +7,17 @@ on the same generated data (seed 42), on the same phone (Infinix X6528, 4 GB RAM
 
 ### Images: request only the size you display
 
+**Request images at display size:** ask the server for the on-screen size × the phone's pixel
+density (e.g. `?w=1000`), so the phone downloads, decodes and stores only the pixels it shows. If
+the server can't resize, let the image library downscale while decoding (`expo-image` does it by
+default) to save memory, though the full file is still downloaded. Never just display a big image
+small: the phone still decodes every pixel (width × height × 4 bytes, ~41 MB for 2400×4267).
+
+Proven in this lab: the same cards at display size scrolled smoothly with no blank images, while
+full size brought slow loading, empty image areas and many stutters (sections 3–5).
+
+**In detail:**
+
 > **When fetching images, request only the size you'll display.** If the server can resize, ask
 > for that exact size: multiply the space the image takes on screen (in dp) by the phone's pixel
 > density, round up (e.g. to the next 100 px), and send it as a URL parameter such as
