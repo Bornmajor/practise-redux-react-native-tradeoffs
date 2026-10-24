@@ -331,4 +331,8 @@ Settings for all runs: 5000 items, Display size, expo-image. Scroll fast to ~car
 | List | Frames dropped | Stutters (4+) | Blank cards or images? | JS FPS while scrolling | TOTAL PSS |
 |---|---|---|---|---|---|
 | FlatList | | | | | |
-| FlashList | | | | | |
+| FlashList | 570 | | | ~60 (steady) | |
+
+**Result:** FlashList ran at a steady ~60 FPS with **570 dropped frames**, the lowest of any
+section so far (5000 items, Display size, expo-image). Compare: 1,286 dropped with FlatList and
+display-size images in section 3.
