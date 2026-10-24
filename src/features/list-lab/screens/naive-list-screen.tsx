@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { FlatList, View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Button, ButtonText } from '@/components/ui/button';
 import { Text } from '@/components/ui/text';
 import { ExpoImageCard } from '../components/expo-image-card';
@@ -13,6 +14,7 @@ const COUNTS = [50, 200, 1000, 5000];
 
 type ImageMode = 'full' | 'display';
 type Renderer = 'rn-image' | 'expo-image';
+type ListKind = 'flatlist' | 'flashlist';
 
 export function NaiveListScreen() {
   const [count, setCount] = useState(50);
@@ -27,6 +29,9 @@ export function NaiveListScreen() {
   // Section 4: which image component draws the cards
   const [renderer, setRenderer] = useState<Renderer>('expo-image');
   const Card = renderer === 'expo-image' ? ExpoImageCard : NaiveCard;
+
+  // Section 5: which list component (mount/unmount vs recycling)
+  const [listKind, setListKind] = useState<ListKind>('flashlist');
 
   // Render timer: time from tapping a count until the next frame after the list is on screen
   const [lastRenderMs, setLastRenderMs] = useState<number | null>(null);
@@ -89,23 +94,50 @@ export function NaiveListScreen() {
           ))}
         </View>
 
+        {/* List component: compare FlatList (mount/unmount) with FlashList (recycling) */}
+        <View className="flex-row flex-wrap gap-2">
+          {(['flatlist', 'flashlist'] as const).map((value) => (
+            <Button
+              key={value}
+              size="sm"
+              variant={value === listKind ? 'default' : 'outline'}
+              onPress={() => setListKind(value)}
+            >
+              <ButtonText>{value === 'flashlist' ? 'FlashList' : 'FlatList'}</ButtonText>
+            </Button>
+          ))}
+        </View>
+
         <Text className="text-xs text-muted-foreground">
-          {count} items · FlatList (default settings) · images:{' '}
+          {count} items · {listKind === 'flashlist' ? 'FlashList' : 'FlatList'} · images:{' '}
           {imageMode === 'full' ? 'full size' : `display size (${displayWidth}px)`} ·{' '}
           {renderer === 'expo-image' ? 'expo-image' : 'RN Image'} · last render:{' '}
           {lastRenderMs === null ? 'tap a count to measure' : `${lastRenderMs} ms`}
         </Text>
       </View>
 
-      {/* Section 2: FlatList with DEFAULT settings. Only the cards near the screen are mounted;
-          off-screen cards are unmounted. No tuning yet. */}
-      <FlatList
-        data={items}
-        keyExtractor={(item) => item.id} // stable, unique key per card
-        renderItem={({ item }) => <Card item={item} imageWidth={imageWidth} />}
-        ItemSeparatorComponent={Separator} // the 16 px gap between cards
-        contentContainerClassName="p-4"
-      />
+      {listKind === 'flashlist' ? (
+        // Section 5: FlashList RECYCLES cards: off-screen cards are reused for new items.
+        // getItemType keeps one recycling pool per image shape, so a tall card is reused for a tall card.
+        <FlashList
+          data={items}
+          keyExtractor={(item) => item.id}
+          renderItem={({ item }) => <Card item={item} imageWidth={imageWidth} />}
+          getItemType={(item) => item.image.shape}
+          ItemSeparatorComponent={Separator}
+          contentContainerStyle={{ padding: 16 }}
+        />
+      ) : (
+        // Section 2: FlatList with DEFAULT settings. Only the cards near the screen are mounted;
+        // off-screen cards are unmounted. No tuning.
+        <FlatList
+          data={items}
+          keyExtractor={(item) => item.id} // stable, unique key per card
+          renderItem={({ item }) => <Card item={item} imageWidth={imageWidth} />}
+          ItemSeparatorComponent={Separator} // the 16 px gap between cards
+          contentContainerClassName="p-4"
+        />
+      )}
     </View>
   );
 }

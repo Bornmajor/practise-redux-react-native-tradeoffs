@@ -288,3 +288,47 @@ Scroll down ~100 cards fast, then back up to the top.
 | 5000 | Full size | expo-image | | | | | |
 | 5000 | Display size | RN Image | | | | | |
 | 5000 | Display size | expo-image | | | | | |
+
+## Section 5: FlatList vs FlashList (recycling)
+
+**Change from section 4:** a fourth switch, **FlatList / FlashList**, on the same items, cards
+and image settings. FlashList 2.0.2 (Expo SDK 57's version) is JavaScript-only, so no rebuild.
+
+### Recycling
+
+| | FlatList | FlashList |
+|---|---|---|
+| a card scrolls off screen | destroyed (unmounted) | kept for reuse |
+| a new card scrolls on screen | created from scratch | an existing card is reused with new data (re-render) |
+| cost of a new card | build components + native views | update props only |
+
+### Different card shapes: `getItemType`
+
+`getItemType={(item) => item.image.shape}` gives each shape its own recycling pool, so a tall
+card is only reused for another tall card and its layout doesn't have to change a lot.
+
+### Recycling-friendly cards
+
+- No local state in cards (a reused card would keep the previous item's state).
+- No `key` props inside cards (they force remounts and defeat recycling).
+- Image views reset when reused: expo-image's `recyclingKey` stops the previous image flashing.
+  It does nothing in FlatList, but matters here.
+
+FlashList v2 measures cards itself (no size estimates) and ignores FlatList's tuning props
+(`initialNumToRender`, `windowSize`, `getItemLayout`…).
+
+### Expected effect
+
+- Less JavaScript work while scrolling (cards are reused, not built), so steadier JS FPS.
+- Steadier memory (a fixed pool of cards instead of create/destroy).
+- After sections 2–4 the list is already smooth, so the gain may be modest. FlashList's
+  advantage grows with heavier cards and weaker phones.
+
+### Results (fill in; reset Perf Monitor between runs)
+
+Settings for all runs: 5000 items, Display size, expo-image. Scroll fast to ~card 300, then back.
+
+| List | Frames dropped | Stutters (4+) | Blank cards or images? | JS FPS while scrolling | TOTAL PSS |
+|---|---|---|---|---|---|
+| FlatList | | | | | |
+| FlashList | | | | | |
