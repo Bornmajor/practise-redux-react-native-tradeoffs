@@ -3,6 +3,47 @@
 Practice branch: `feature/long-list-lab`. Each section changes ONE thing and measures the effect
 on the same generated data (seed 42), on the same phone (Infinix X6528, 4 GB RAM).
 
+## Optimization techniques
+
+1. **Virtualize the list (`FlatList` instead of `ScrollView` + `.map()`):** only cards near the
+   screen are created; off-screen cards are removed, so even 5,000 items open fast and scroll at
+   ~60 FPS instead of ~10. Never use `ScrollView` for long lists.
+
+2. **Request images at display size:** ask the server for the on-screen size × the phone's pixel
+   density (e.g. `?w=1000`), so the phone downloads, decodes and stores only the pixels it shows.
+   If the server can't resize, let the image library downscale while decoding (`expo-image` does
+   it by default) to save memory, though the full file is still downloaded. Never just display a
+   big image small: the phone still decodes every pixel (width × height × 4 bytes, ~41 MB for
+   2400×4267).
+
+3. **Reserve image space before it loads:** use the image's known width and height (sent by the
+   API) with `aspectRatio`, so each card has its final height immediately, with no layout jumps
+   as images arrive.
+
+4. **Use `expo-image` instead of React Native's `Image`:** it adds memory and disk caching,
+   placeholders (a color or a blurred preview), fade-in transitions and automatic downscaling,
+   and it's designed to work well with virtualized and recycling lists (`recyclingKey`).
+
+5. **Recycle cards with `FlashList` for long or heavy lists:** instead of destroying and
+   recreating cards, it reuses them with new data, which means less work and steadier frame
+   rates. Use `getItemType` so each card shape has its own recycling pool, and keep cards free of
+   local state and inner `key` props.
+
+6. **Load data in pages:** fetch a page at a time (e.g. 50 items) and request the next one with
+   `onEndReached` before the user reaches the end (`onEndReachedThreshold={0.5}`), guarding
+   against duplicate requests. The first screen appears faster, and memory grows only as the user
+   scrolls.
+
+7. **Prefetch the next images:** when a new page arrives, start downloading its first images
+   (`Image.prefetch`), so they're already cached when their cards scroll into view.
+
+8. **Keep cards light and keys stable:** use a unique id as the key (never the array index), keep
+   each card's component tree simple, and avoid unnecessary re-renders (the React Compiler
+   handles much of this automatically).
+
+**Order matters:** fix the biggest cost first. In this lab, virtualization (1) and image size (2)
+made the largest difference, much more than switching libraries.
+
 ## Rules to remember
 
 ### Images: request only the size you display
